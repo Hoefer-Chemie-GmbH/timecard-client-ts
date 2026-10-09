@@ -1,0 +1,43 @@
+{
+  "name": "timecard-client",
+  "version": "0.1.0",
+  "description": "TypeScript client for a timeCard REST facade, generated from its OpenAPI specification",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hoefer-Chemie-GmbH/timecard-client-ts.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test --import tsx test/*.test.ts",
+    "example": "tsx examples/read-person.ts",
+    "prepare": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.14.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "openapi-typescript": "^7.9.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

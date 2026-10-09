@@ -1,0 +1,29 @@
+# Tags the version in package.json when it has no tag yet and attaches the packed package to a GitHub release.
+name: Release
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: version
+        run: |
+          v=$(node -p "require('./package.json').version")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          if git rev-parse "v$v" >/dev/null 2>&1; then echo "exists=true" >> "$GITHUB_OUTPUT"; else echo "exists=false" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.version.outputs.exists == 'false'
+        run: |
+          npm ci --no-audit --no-fund
+          npm pack
+          gh release create "v${{ steps.version.outputs.version }}" timecard-client-*.tgz --target "$GITHUB_SHA" --title "v${{ steps.version.outputs.version }}" --notes "timecard-client ${{ steps.version.outputs.version }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
