@@ -398,7 +398,8 @@ export interface paths {
         /** Projects */
         get: operations["listProjects"];
         put?: never;
-        post?: never;
+        /** Create a project (timeCard user right 213 create) */
+        post: operations["createProject"];
         delete?: never;
         options?: never;
         head?: never;
@@ -416,10 +417,12 @@ export interface paths {
         get: operations["getProject"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete a project (timeCard user right 213 delete; a project in use is rejected by timeCard) */
+        delete: operations["deleteProject"];
         options?: never;
         head?: never;
-        patch?: never;
+        /** Change a project (read-modify-write, timeCard user right 213 update) */
+        patch: operations["updateProject"];
         trace?: never;
     };
     "/v1/projects/{projectId}/work-operations": {
@@ -2065,8 +2068,11 @@ export interface operations {
                     includeFreeDays?: boolean;
                     /** @default false */
                     halfDay?: boolean;
-                    /** @description share of the day in percent; mutually exclusive with halfDay */
+                    /** @description share of the target time in percent; only for absence types kept in hours (timeCard ignores it for vacation) */
                     percent?: number;
+                    /** @description duration per day as HH:MM; only for absence types kept in hours (timeCard ignores it for vacation) */
+                    duration?: string;
+                    /** @description start of the absence; stored as text only, timeCard does not evaluate it */
                     startTime?: string;
                     /** @default  */
                     comment?: string;
@@ -2785,6 +2791,73 @@ export interface operations {
             };
         };
     };
+    createProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    /** @description short code shown in the UI */
+                    token?: string | null;
+                    /** @description unique number shown in the UI; null for none */
+                    number?: number | null;
+                    description?: string | null;
+                    /** @description last day the project can be booked; null for open-ended */
+                    endDate?: string | null;
+                    isActive?: boolean;
+                    /** @description work operations that may be booked on the project */
+                    workOperationIds?: number[];
+                    restrictedDepartmentIds?: number[];
+                    restrictedGroupIds?: number[];
+                    browserAllowed?: boolean;
+                    terminalAllowed?: boolean;
+                    appAllowed?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: number;
+                        name: string;
+                        token: string | null;
+                        number: number | null;
+                        description: string | null;
+                        endDate: string | null;
+                        isActive: boolean;
+                        isUsed: boolean;
+                        workOperationIds: number[];
+                        restrictedDepartmentIds: number[];
+                        restrictedGroupIds: number[];
+                        browserAllowed: boolean;
+                        terminalAllowed: boolean;
+                        appAllowed: boolean;
+                        freeFields: {
+                            entryId: number | null;
+                            freeFieldId: number;
+                            name: string;
+                            dataType: string;
+                            lookup: {
+                                key: string;
+                                label: string;
+                            }[] | null;
+                            value: string | null;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
     getProject: {
         parameters: {
             query?: never;
@@ -2795,6 +2868,95 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: number;
+                        name: string;
+                        token: string | null;
+                        number: number | null;
+                        description: string | null;
+                        endDate: string | null;
+                        isActive: boolean;
+                        isUsed: boolean;
+                        workOperationIds: number[];
+                        restrictedDepartmentIds: number[];
+                        restrictedGroupIds: number[];
+                        browserAllowed: boolean;
+                        terminalAllowed: boolean;
+                        appAllowed: boolean;
+                        freeFields: {
+                            entryId: number | null;
+                            freeFieldId: number;
+                            name: string;
+                            dataType: string;
+                            lookup: {
+                                key: string;
+                                label: string;
+                            }[] | null;
+                            value: string | null;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    deleteProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateProject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name?: string;
+                    /** @description short code shown in the UI */
+                    token?: string | null;
+                    /** @description unique number shown in the UI; null for none */
+                    number?: number | null;
+                    description?: string | null;
+                    /** @description last day the project can be booked; null for open-ended */
+                    endDate?: string | null;
+                    isActive?: boolean;
+                    /** @description work operations that may be booked on the project */
+                    workOperationIds?: number[];
+                    restrictedDepartmentIds?: number[];
+                    restrictedGroupIds?: number[];
+                    browserAllowed?: boolean;
+                    terminalAllowed?: boolean;
+                    appAllowed?: boolean;
+                };
+            };
+        };
         responses: {
             /** @description Default Response */
             200: {
