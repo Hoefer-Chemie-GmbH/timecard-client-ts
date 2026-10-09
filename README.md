@@ -62,7 +62,7 @@ const persons = unwrap(await client.GET('/v1/persons', { params: { query: { page
 
 ### Without a key file
 
-A key file is a long-lived secret. Where the system runs on Google Cloud as the registered service account (Cloud Run, GKE, Compute Engine), the metadata server issues the ID token. Elsewhere the operator can allow the system's own identity to obtain tokens for the service account: IAM Credentials API `generateIdToken` with `includeEmail: true`, or Workload Identity Federation. The token must carry the `email` claim; the metadata server includes it only with `format=full`.
+A key file is a long-lived secret. Where the system runs on Google Cloud as the registered service account (Compute Engine, GKE with Workload Identity), the metadata server issues the ID token. Elsewhere the operator allows the system's own Google identity to impersonate the service account (role `Service Account Token Creator`), and the system calls the IAM Credentials API `generateIdToken` with `audience` = base URL and `includeEmail: true`; a system outside Google Cloud first obtains such an identity through Workload Identity Federation. The token must carry the claims `email` and `email_verified`: the metadata server includes them only with `format=full`, `generateIdToken` only with `includeEmail: true`. Check the result with `GET /v1/me`.
 
 ```ts
 import { createTimecardClient, type TokenSource } from 'timecard-client';
