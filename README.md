@@ -32,13 +32,8 @@ Access is granted per system by the operator of the facade; there is no self-ser
 |---|---|
 | System name | `hr-sync` (one service account per system and environment) |
 | Responsible person | name and e-mail address |
-| Purpose | "synchronises employees every 15 minutes" |
 | Scopes | `persons:read`, `bookings:read` (see [Scopes](#scopes)) |
 | Write access | which operations, if any |
-| Runtime | Google Cloud, another cloud, on premises, developer machine |
-| Expected volume | calls per hour, peaks |
-| Validity | open-ended, or an end date for development and tests |
-| Source addresses | fixed addresses, if access should be restricted to them |
 
 The operator returns the base URL of the facade and a Google service account registered with the granted scopes, either as a JSON key or as the permission to obtain tokens for it without a key (see [Without a key file](#without-a-key-file)). The first call after the setup is `GET /v1/me`: it needs no scope and returns the registered name and scopes.
 
