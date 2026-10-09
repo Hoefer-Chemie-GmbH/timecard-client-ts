@@ -754,7 +754,35 @@ export interface paths {
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
+    schemas: {
+        /** @description Problem Details (RFC 9457). Quote `instance` when reporting a problem. */
+        Problem: {
+            /**
+             * Format: uri
+             * @description problem type; its last path segment names it, e.g. `validation`, `unauthorized`, `rate-limited`, `upstream`
+             */
+            type: string;
+            /** @description short summary of the problem type */
+            title: string;
+            /** @description HTTP status code */
+            status: number;
+            /** @description explanation of this occurrence */
+            detail?: string;
+            /** @description `urn:request:<id>`; the id is also sent as the response header `X-Request-Id` */
+            instance: string;
+            /** @description schema violations (type `validation`) */
+            errors?: {
+                path: string;
+                message: string;
+            }[];
+            /** @description the call to the time recording system that failed, with its status, code and message */
+            upstream?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+    };
     responses: never;
     parameters: never;
     requestBodies: never;
@@ -782,6 +810,60 @@ export interface operations {
                         facadeVersion: string;
                         timecardVersion: string;
                     };
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -812,6 +894,15 @@ export interface operations {
                         auditDb: "ok" | "unavailable" | "skipped";
                         version: string;
                     };
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
             /** @description Default Response */
@@ -856,6 +947,51 @@ export interface operations {
                         scopes: string[];
                         tokenExpiresAt: string;
                     };
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -903,6 +1039,78 @@ export interface operations {
                         page: number;
                         pageSize: number;
                     };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -1061,6 +1269,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     getPerson: {
@@ -1174,6 +1463,87 @@ export interface operations {
                             }[];
                         };
                     };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -1331,6 +1701,96 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     getPersonByPersonNo: {
@@ -1444,6 +1904,87 @@ export interface operations {
                             }[];
                         };
                     };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -1701,6 +2242,96 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     getPersonPhoto: {
@@ -1720,6 +2351,87 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
             };
         };
     };
@@ -1745,6 +2457,96 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
             };
         };
     };
@@ -1794,6 +2596,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     listBookings: {
@@ -1839,6 +2722,78 @@ export interface operations {
                         from: string;
                         to: string;
                     };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -1916,6 +2871,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     getBooking: {
@@ -1959,6 +2995,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     deleteBooking: {
@@ -1982,6 +3099,96 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
             };
         };
     };
@@ -2038,6 +3245,96 @@ export interface operations {
                             link: string | null;
                         } | null;
                     };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -2104,6 +3401,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     assignWorkingProfile: {
@@ -2143,6 +3521,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     removeWorkingProfileAssignment: {
@@ -2164,6 +3623,87 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
             };
         };
     };
@@ -2275,6 +3815,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     getPersonCalendar: {
@@ -2345,6 +3966,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     getPersonAbsenceOverview: {
@@ -2395,6 +4097,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     getAbsenceOverview: {
@@ -2443,6 +4226,78 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     listCalculationAccounts: {
@@ -2473,6 +4328,87 @@ export interface operations {
                             unit: "DAYS" | "SECONDS";
                         }[];
                     };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -2512,6 +4448,87 @@ export interface operations {
                             addToTotal: boolean;
                         }[];
                     };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -2564,6 +4581,96 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     replaceCarryOver: {
@@ -2612,6 +4719,96 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     deleteCarryOver: {
@@ -2636,6 +4833,96 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
             };
         };
     };
@@ -2670,6 +4957,78 @@ export interface operations {
                             weightingType: number | null;
                         }[];
                     };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -2739,6 +5098,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     listPresence: {
@@ -2773,6 +5213,60 @@ export interface operations {
                     };
                 };
             };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     listProjects: {
@@ -2802,6 +5296,78 @@ export interface operations {
                             isActive: boolean;
                         }[];
                     };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -2874,6 +5440,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     getProject: {
@@ -2922,6 +5569,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     deleteProject: {
@@ -2941,6 +5669,96 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
             };
         };
     };
@@ -3011,6 +5829,96 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     listProjectWorkOperations: {
@@ -3038,6 +5946,87 @@ export interface operations {
                             isActive: boolean;
                         }[];
                     };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -3073,6 +6062,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     listWorkOperations: {
@@ -3098,6 +6168,60 @@ export interface operations {
                             isActive: boolean;
                         }[];
                     };
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -3161,6 +6285,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     getWorkOperation: {
@@ -3206,6 +6411,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     deleteWorkOperation: {
@@ -3225,6 +6511,96 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
             };
         };
     };
@@ -3286,6 +6662,96 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     listDepartments: {
@@ -3310,6 +6776,60 @@ export interface operations {
                             isActive: boolean;
                         }[];
                     };
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -3363,6 +6883,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     listDepartmentMembers: {
@@ -3401,6 +7002,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     listGroups: {
@@ -3425,6 +7107,60 @@ export interface operations {
                             isActive: boolean;
                         }[];
                     };
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -3478,6 +7214,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     listGroupMembers: {
@@ -3516,6 +7333,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     listCalculationTemplates: {
@@ -3549,6 +7447,78 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     listWorkingProfiles: {
@@ -3577,6 +7547,78 @@ export interface operations {
                             isActive: boolean;
                         }[];
                     };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -3652,6 +7694,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     listBreakRules: {
@@ -3678,6 +7801,78 @@ export interface operations {
                             type: string;
                         }[];
                     };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -3715,6 +7910,87 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     listFreeFields: {
@@ -3741,6 +8017,60 @@ export interface operations {
                             orderNo: number | null;
                         }[];
                     };
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -3775,6 +8105,87 @@ export interface operations {
                         }[] | null;
                         isUsed: boolean;
                     };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -3861,6 +8272,69 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     getAuditEvent: {
@@ -3921,6 +8395,78 @@ export interface operations {
                         errorDetail: string | null;
                         appVersion: string;
                     };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The resource does not exist (`not-found`). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };

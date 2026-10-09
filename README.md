@@ -4,7 +4,7 @@ TypeScript client for a REST facade in front of the time recording system REINER
 
 This project is not affiliated with, endorsed or sponsored by REINER SCT. REINER SCT and timeCard are trademarks of their respective owner.
 
-- API version `0.3.0`.
+- API version `0.4.0`.
 - Generated: `src/schema.ts` (types for every path, parameter and body).
 - Hand-written: `src/auth.ts` (Google ID tokens), `src/client.ts` (client factory, Problem Details errors).
 
@@ -13,13 +13,13 @@ This project is not affiliated with, endorsed or sponsored by REINER SCT. REINER
 From the Git tag of a version (npm builds the package on installation):
 
 ```
-npm install "github:Hoefer-Chemie-GmbH/timecard-client-ts#v0.3.0"
+npm install "github:Hoefer-Chemie-GmbH/timecard-client-ts#v0.4.0"
 ```
 
 or from the packed package attached to the GitHub release:
 
 ```
-npm install https://github.com/Hoefer-Chemie-GmbH/timecard-client-ts/releases/download/v0.3.0/timecard-client-0.3.0.tgz
+npm install https://github.com/Hoefer-Chemie-GmbH/timecard-client-ts/releases/download/v0.4.0/timecard-client-0.4.0.tgz
 ```
 
 Node 20 or newer; the runtime dependency is `openapi-fetch` only.

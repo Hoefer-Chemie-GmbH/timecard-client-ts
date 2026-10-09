@@ -1,6 +1,6 @@
 {
   "name": "timecard-client",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "TypeScript client for a timeCard REST facade, generated from its OpenAPI specification",
   "license": "UNLICENSED",
   "private": true,
