@@ -910,7 +910,10 @@ export interface operations {
     createPerson: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Repeating the request with the same key within 24 hours returns the stored response (header `Idempotent-Replayed: true`) instead of executing it again */
+                "idempotency-key"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1846,7 +1849,10 @@ export interface operations {
                 /** @description false: variant without immediate recalculation (bulk import); balances are temporarily stale afterwards */
                 calculate?: string;
             };
-            header?: never;
+            header?: {
+                /** @description Repeating the request with the same key within 24 hours returns the stored response (header `Idempotent-Replayed: true`) instead of executing it again */
+                "idempotency-key"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2042,7 +2048,10 @@ export interface operations {
                 /** @description false: variant without immediate recalculation (bulk import); balances are temporarily stale afterwards */
                 calculate?: string;
             };
-            header?: never;
+            header?: {
+                /** @description Repeating the request with the same key within 24 hours returns the stored response (header `Idempotent-Replayed: true`) instead of executing it again */
+                "idempotency-key"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2100,7 +2109,10 @@ export interface operations {
     assignWorkingProfile: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Repeating the request with the same key within 24 hours returns the stored response (header `Idempotent-Replayed: true`) instead of executing it again */
+                "idempotency-key"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2507,7 +2519,10 @@ export interface operations {
     createCarryOver: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Repeating the request with the same key within 24 hours returns the stored response (header `Idempotent-Replayed: true`) instead of executing it again */
+                "idempotency-key"?: string;
+            };
             path: {
                 personId: number;
                 calculationId: number;
@@ -2794,7 +2809,10 @@ export interface operations {
     createProject: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Repeating the request with the same key within 24 hours returns the stored response (header `Idempotent-Replayed: true`) instead of executing it again */
+                "idempotency-key"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3087,7 +3105,10 @@ export interface operations {
     createWorkOperation: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Repeating the request with the same key within 24 hours returns the stored response (header `Idempotent-Replayed: true`) instead of executing it again */
+                "idempotency-key"?: string;
+            };
             path?: never;
             cookie?: never;
         };
