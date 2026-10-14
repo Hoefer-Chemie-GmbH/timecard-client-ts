@@ -388,6 +388,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/presence/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Presence status of all employees: person id and PRESENT or ABSENT only (an absence with a reason is ABSENT; no names, no reasons) */
+        get: operations["listPresenceStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/projects": {
         parameters: {
             query?: never;
@@ -5209,6 +5226,87 @@ export interface operations {
                             reason: string | null;
                             firstClockIn: string | null;
                             location: string | null;
+                        }[];
+                    };
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listPresenceStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        asOf: string;
+                        items: {
+                            personId: number;
+                            /** @enum {string} */
+                            status: "PRESENT" | "ABSENT";
                         }[];
                     };
                 };
