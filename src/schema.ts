@@ -284,6 +284,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Availability of all employees per day (at most 92 days): AVAILABLE, PARTIALLY_AVAILABLE, UNAVAILABLE or UNKNOWN, without names, reasons or times */
+        get: operations["listAvailability"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/persons/{personId}/calculation-accounts": {
         parameters: {
             query?: never;
@@ -520,7 +537,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Departments */
+        /** Departments (also with presence:status or availability:read; limited to the departments of the account) */
         get: operations["listDepartments"];
         put?: never;
         post?: never;
@@ -962,6 +979,8 @@ export interface operations {
                         subject: string;
                         displayName: string;
                         scopes: string[];
+                        /** @description departments whose persons the account sees; null = all persons */
+                        departments: string[] | null;
                         tokenExpiresAt: string;
                     };
                 };
@@ -4317,6 +4336,114 @@ export interface operations {
             };
         };
     };
+    listAvailability: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                /** @description department name as in timeCard (see GET /v1/departments), repeatable; only persons of these departments */
+                department?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        from: string;
+                        to: string;
+                        items: {
+                            personId: number;
+                            days: {
+                                date: string;
+                                /** @enum {string} */
+                                status: "AVAILABLE" | "PARTIALLY_AVAILABLE" | "UNAVAILABLE" | "UNKNOWN";
+                            }[];
+                        }[];
+                    };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     listCalculationAccounts: {
         parameters: {
             query?: {
@@ -5288,7 +5415,10 @@ export interface operations {
     };
     listPresenceStatus: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description department name as in timeCard (see GET /v1/departments), repeatable; only persons of these departments */
+                department?: string[];
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -5311,6 +5441,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
             401: {
                 headers: {
@@ -5322,6 +5461,15 @@ export interface operations {
             };
             /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
