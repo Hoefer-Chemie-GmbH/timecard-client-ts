@@ -291,7 +291,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Availability of all employees per day (at most 92 days): AVAILABLE, PARTIALLY_AVAILABLE, UNAVAILABLE or UNKNOWN, without names, reasons or times */
+        /** Availability of all employees per day (at most 92 days): person id, personnel number and AVAILABLE, PARTIALLY_AVAILABLE, UNAVAILABLE or UNKNOWN, without names, reasons or times */
         get: operations["listAvailability"];
         put?: never;
         post?: never;
@@ -412,7 +412,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Presence status of all employees: person id and PRESENT or ABSENT only (an absence with a reason is ABSENT; no names, no reasons) */
+        /** Presence status of all employees: person id, personnel number and PRESENT or ABSENT only (an absence with a reason is ABSENT; no names, no reasons) */
         get: operations["listPresenceStatus"];
         put?: never;
         post?: never;
@@ -4361,6 +4361,7 @@ export interface operations {
                         to: string;
                         items: {
                             personId: number;
+                            personNo: string | null;
                             days: {
                                 date: string;
                                 /** @enum {string} */
@@ -5435,6 +5436,7 @@ export interface operations {
                         asOf: string;
                         items: {
                             personId: number;
+                            personNo: string | null;
                             /** @enum {string} */
                             status: "PRESENT" | "ABSENT";
                         }[];
