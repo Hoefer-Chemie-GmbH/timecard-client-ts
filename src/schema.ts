@@ -785,6 +785,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/timecard-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open a pass-through timeCard session with a person's own login (the password is sent to timeCard once and not kept) */
+        post: operations["openTimecardSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/timecard-sessions/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** End the timeCard session named in the header X-Timecard-Session */
+        delete: operations["closeTimecardSession"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -981,6 +1015,29 @@ export interface operations {
                         scopes: string[];
                         /** @description departments whose persons the account sees; null = all persons */
                         departments: string[] | null;
+                        /** @description timeCard login whose user rights apply to this account; null = the technical user of the facade */
+                        timecardUser: {
+                            /** @description key of the timeCard login in the configuration of the facade */
+                            key: string;
+                            /** @description timeCard user name */
+                            userName: string;
+                            /** @description timeCard person of the login */
+                            personId: number;
+                            personName: string;
+                        } | null;
+                        /**
+                         * @description whether the account may or must use pass-through timeCard sessions
+                         * @enum {string}
+                         */
+                        timecardSessions: "off" | "allowed" | "required";
+                        /** @description pass-through session of this request (header X-Timecard-Session); its user rights apply */
+                        timecardSession: {
+                            userName: string;
+                            personId: number;
+                            personName: string;
+                            createdAt: string;
+                            expiresAt: string;
+                        } | null;
                         tokenExpiresAt: string;
                     };
                 };
@@ -8503,6 +8560,10 @@ export interface operations {
                                 path: string;
                                 status: number;
                                 durationMs: number;
+                                /** @description delegated timeCard user that made the call; absent = technical user */
+                                timecardUser?: string;
+                                /** @description timeCard user of the pass-through session that made the call */
+                                timecardSession?: string;
                             }[];
                             sensitive: boolean;
                             statusCode: number;
@@ -8634,6 +8695,10 @@ export interface operations {
                             path: string;
                             status: number;
                             durationMs: number;
+                            /** @description delegated timeCard user that made the call; absent = technical user */
+                            timecardUser?: string;
+                            /** @description timeCard user of the pass-through session that made the call */
+                            timecardSession?: string;
                         }[];
                         sensitive: boolean;
                         statusCode: number;
@@ -8701,6 +8766,215 @@ export interface operations {
             };
             /** @description Internal error of the facade (`internal`). */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    openTimecardSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    username: string;
+                    password: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description send as header X-Timecard-Session */
+                        sessionId: string;
+                        session: {
+                            userName: string;
+                            personId: number;
+                            personName: string;
+                            createdAt: string;
+                            /** @description the session ends at the latest at this time, earlier when idle or ended by timeCard */
+                            expiresAt: string;
+                        };
+                    };
+                };
+            };
+            /** @description The request does not match the schema (`validation`, with `errors`) or is malformed (`bad-request`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system is unreachable or the login failed, the audit log is not writable and the change was not executed, or the store for `Idempotency-Key` is unavailable (`upstream-unavailable`, `audit-unavailable`, `idempotency-unavailable`). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    closeTimecardSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No token, an invalid or expired token, or a token for a different audience (`unauthorized`). */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Service account not registered, disabled or outside its permitted addresses, scope missing, or write access to a person outside the released set (`forbidden`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system rejected the change, or a request with the same `Idempotency-Key` is still in progress (`conflict`, `idempotency-in-progress`). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The request is valid by schema but cannot be processed, e.g. a period that is too long, or an `Idempotency-Key` reused for a different request (`unprocessable`, `idempotency-mismatch`). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Too many requests (`rate-limited`); the header `Retry-After` names the seconds to wait. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error of the facade (`internal`). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The time recording system answered with an error or unexpectedly, or its technical user lacks a permission (`upstream`, `upstream-permission`). */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };
